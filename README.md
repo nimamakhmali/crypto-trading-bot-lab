@@ -30,3 +30,28 @@ A flexible and professional Python-based framework for building and testing auto
 Install requirements:
 ```bash
 pip install -r requirements.txt
+
+# 🧠 Bot Architecture
+
+          +------------------------+
+          |    Strategy Module     |
+          |  (e.g., Pin Bar, EMA)  |
+          +-----------+------------+
+                      |
+                      v
+              +-------+--------+
+              | Market Data    | <------+
+              | (Candles, LTP) |        | REST/WebSocket
+              +-------+--------+        |
+                      |                 |
+                      v                 |
+              +-------+--------+        |
+              | Trade Executor |        |
+              | (Buy/Sell API) | <------+
+              +-------+--------+
+                      |
+                      v
+             +--------+---------+
+             | Logger & Tracker |
+             +------------------+
+
