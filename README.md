@@ -18,3 +18,15 @@ A flexible and professional Python-based framework for building and testing auto
 
 ## 🧱 Project Structure
 
+
+
+---
+
+## ⚙️ Requirements
+
+- Python 3.9+
+- `requests`, `pandas`, `ta`, etc.
+
+Install requirements:
+```bash
+pip install -r requirements.txt
