@@ -31,6 +31,8 @@ Install requirements:
 ```bash
 pip install -r requirements.txt
 
+```
+
 # 🧠 Bot Architecture
 
           +------------------------+
@@ -55,3 +57,5 @@ pip install -r requirements.txt
              | Logger & Tracker |
              +------------------+
 
+
+![Bot Architecture](docs/architecture.png)
