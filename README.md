@@ -57,5 +57,3 @@ pip install -r requirements.txt
              | Logger & Tracker |
              +------------------+
 
-
-![Bot Architecture](docs/architecture.png)
