@@ -51,4 +51,5 @@ class LBankAPI(IEXchangeAPI):
             "order_id": order_id,
         }
         return self._post("/v1/cancel_order.do", params)
+    
         
