@@ -1,19 +1,15 @@
-from API.LBank_API import LBankAPI
+# main.py
 
-def main():
-    lbank = LBankAPI()
-
-    print(" Getting account info...")
-    account_info = lbank.get_account_info()
-    print(account_info)
-
-    print("\n Getting ticker for btc_usdt...")
-    ticker = lbank.get_ticker("btc_usdt")
-    print(ticker)
-
-    # print("\n Placing order...")
-    # order = lbank.place_order("btc_usdt", "buy", price=20000, amount=0.001)
-    # print(order)
+from webSocket.LBank_WS_Client import LBankWebSocketClient
+import time
 
 if __name__ == "__main__":
-    main() 
+    ws_client = LBankWebSocketClient(symbol="btc_usdt", csv_file="btc_usdt_data.csv")
+    ws_client.connect()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print(" Stopping...")
+        ws_client.disconnect()
