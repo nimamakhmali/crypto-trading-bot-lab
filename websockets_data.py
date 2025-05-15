@@ -79,7 +79,7 @@ async def live_ticker():
                         print(f"[{now} UTC] Price: {tick['latest']}")
         except Exception as e:
             print(f" Error in live_ticker: {e}")
-            await asyncio.sleep(1)
+            await asyncio.sleep(3)
 
 
 async def main():
