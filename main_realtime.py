@@ -1,24 +1,21 @@
-import asyncio
+import multiprocessing
 import subprocess
-from websockets_data import kbar_handler, live_ticker
+import time
 
-
-async def convert_to_candles():
-    while True:  
+def run_websockets_data():
+    subprocess.run(["python", "websockets_data.py"])
+    
+def run_candle_updater():
+    while True:
         subprocess.run(["python", "change_to_1min.py"])
-        await asyncio.sleep(5) 
-        '''
-        Process = await asyncio.create_subprocess_exec(
-            "python", "websockets_data."
-        )
-        '''  
-
-async def main():
-    await asyncio.gather(
-        kbar_handler(),
-        live_ticker(),
-        convert_to_candles(),
-    )            
+        time.sleep(5)
 
 if __name__ == "main":
-    asyncio.run(main())           
+    
+    p1 = multiprocessing.Process(target=run_websockets_data)
+    p2 = multiprocessing.Process(target=run_candle_updater)
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+                
