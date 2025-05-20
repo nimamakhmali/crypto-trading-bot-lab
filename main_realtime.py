@@ -1,7 +1,11 @@
-import multiprocessing
-import subprocess
-import time
 
+from target_strategy.strategy_tagger import SimpleTagger
+tagger = SimpleTagger("lbank_1min_candles.csv")
+tagger.tag_initial_leg()
+tagger.export()
+              
+              
+'''
 def run_websockets_data():
     subprocess.run(["python", "websockets_data.py"])
     
@@ -18,4 +22,5 @@ if __name__ == "main":
     p2.start()
     p1.join()
     p2.join()
-                
+                '''
+                              
