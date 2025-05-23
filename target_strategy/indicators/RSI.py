@@ -1,5 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import mplfinance as mpf
 
 def calculate_rsi(df, period: int = 14):
@@ -18,16 +17,26 @@ def add_rsi_to_csv(input_file: str = "lbank_1min_candles.csv", output_file: str 
     df.to_csv(output_path)
     print(f" RSI added and saved to {output_path}")
     
-    return df 
+    return df
 
 def plot_rsi(df):
+    rsi_colors = []
+    for r in df['rsi']:
+        if r >= 70:
+            rsi_colors.append('red')
+        elif r <= 30:
+            rsi_colors.append('green')
+        else:
+            rsi_colors.append('purple')
+
+    # RSI Panelllll     Siuuuuuu
     apds = [
-        mpf.make_addplot(df['rsi'], panel=1, color='purple', ylabel='RSI')
+        mpf.make_addplot(df['rsi'], panel=1, color=rsi_colors, width=1, ylabel='RSI')
     ]
 
     mpf.plot(df, type='candle', volume=True, style='charles',
-             addplot=apds, title='Candlestick + RSI',
-             panel_ratios=(3, 1))
+             addplot=apds, title='Candlestick + RSI (Colored)',
+             panel_ratios=(3,1), figratio=(12,6))
 
 if __name__ == "__main__":
     df = add_rsi_to_csv()
