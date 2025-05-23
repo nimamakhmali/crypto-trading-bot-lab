@@ -1,4 +1,4 @@
-import pandas as pd
+'''import pandas as pd
 
 class SimpleTagger:
     def __init__(self, candle_file: str):
@@ -49,4 +49,71 @@ class SimpleTagger:
     
     def get_dataFrame(self):
         return self.df                      
-        
+'''        
+import pandas as pd
+import matplotlib.pyplot as plt
+import mplfinance as mpf
+
+THRESHOLD = 0.01
+
+df = pd.read_csv("lbank_1min_candles.csv", parse_dates=['time'], index_col='time')
+
+pivots = []
+last_pivot_price = df.iloc[0]['close']
+last_pivot_index = df.index[0]
+direction = None  # up - down
+tags = [1]
+
+for i in range(1, len(df)):
+    current_price = df.iloc[i]['close']
+    current_index = df.index[i]
+    price_change = (current_price - last_pivot_price) / last_pivot_price
+
+    if direction is None:
+        if abs(price_change) >= THRESHOLD:
+            direction = 'up' if price_change > 0 else direction = 'down'
+            pivots.append((last_pivot_index, last_pivot_price))
+
+            last_pivot_price = current_price
+            last_pivot_index = current_index
+            tags.append(2)
+        else:
+            tags.append(0)
+    elif direction == 'up':
+        if  current_price > last_pivot_price:
+            last_pivot_price = current_price
+            last_pivot_index = current_index
+            tags.append(0)
+        elif(last_pivot_price - current_price) / last_pivot_price >= THRESHOLD:
+            pivots.append((last_pivot_index, last_pivot_price))
+            direction = 'down'
+            last_pivot_price = current_price
+            last_pivot_index = current_index    
+            tags.append(2)
+        else:
+            tags.append(0)
+
+df['tag'] = tags
+
+df.to_csv("lbank_1min_candles.csv")
+
+zz_lines = [(pivots[i][0], pivots[i+1][0]) for i in range(len(pivots)-1)]
+zz_prices = [(pivots[i][1], pivots[i+1][1]) for i in range(len(pivots)-1)]
+
+ap_lines = []
+for(start, end), (p1, p2) in zip(zz_lines, zz_prices):
+    ap_lines.append(mpf.make_addplot(
+        [p1, p2],
+        panel = 0,
+        secondry_y = False,
+        type = 'line',
+        linestyle= 'dashed',
+        linewidth = 1.5,
+        color = 'red',
+        yvalues = [p1, p2],
+        x = [start, end]
+    ))
+
+mpf.plot(df, type='candle', volume=True, style='charles',
+         title='LBank 1-Min Candles with ZigZag',
+         addplot=ap_lines)    
