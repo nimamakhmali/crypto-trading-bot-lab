@@ -71,7 +71,7 @@ for i in range(1, len(df)):
 
     if direction is None:
         if abs(price_change) >= THRESHOLD:
-            direction = 'up' if price_change > 0 else direction = 'down'
+            direction = 'up' if price_change > 0 else 'down'
             pivots.append((last_pivot_index, last_pivot_price))
 
             last_pivot_price = current_price
@@ -117,3 +117,5 @@ for(start, end), (p1, p2) in zip(zz_lines, zz_prices):
 mpf.plot(df, type='candle', volume=True, style='charles',
          title='LBank 1-Min Candles with ZigZag',
          addplot=ap_lines)    
+
+
