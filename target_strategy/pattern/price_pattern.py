@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# --- تابع تشخیص سقف محلی ---
+# --- main ceiling ---
 def rw_top(data: np.array, curr_index: int, order: int) -> bool:
     if curr_index < order * 2 + 1:
         return False
@@ -13,7 +13,7 @@ def rw_top(data: np.array, curr_index: int, order: int) -> bool:
             return False
     return True
 
-# --- تابع تشخیص کف محلی ---
+# --- main floor ---
 def rw_bottom(data: np.array, curr_index: int, order: int) -> bool:
     if curr_index < order * 2 + 1:
         return False
@@ -24,7 +24,7 @@ def rw_bottom(data: np.array, curr_index: int, order: int) -> bool:
             return False
     return True
 
-# --- تابع استخراج سقف‌ها و کف‌ها ---
+# --- ceiling and floor ---
 def rw_extremes(data: np.array, order: int):
     tops = []
     bottoms = []
@@ -35,19 +35,15 @@ def rw_extremes(data: np.array, order: int):
             bottoms.append([i, i - order, data[i - order]])
     return tops, bottoms
 
-# --- بخش اصلی برنامه ---
+# --- main---
 if __name__ == "__main__":
-    # خواندن فایل
+    
     df = pd.read_csv('lbank_1min_candles.csv')
     df['time'] = pd.to_datetime(df['time'])
     df = df.set_index('time')
-
-    # اجرای الگوریتم
     order = 10
     close_prices = df['close'].to_numpy()
     tops, bottoms = rw_extremes(close_prices, order)
-
-    # رسم نمودار
     df['close'].plot(figsize=(15, 5), title="Local Tops & Bottoms - LBank 1min Data")
     idx = df.index
     for top in tops:
