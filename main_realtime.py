@@ -1,5 +1,5 @@
 
-from target_strategy.strategy_tagger import SimpleTagger
+from target_strategy.pattern.strategy_tagger import SimpleTagger
 tagger = SimpleTagger("lbank_1min_candles.csv")
 tagger.tag_initial_leg()
 tagger.export()
