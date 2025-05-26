@@ -1,26 +1,22 @@
+import threading
+import time
+import subprocess
 
-from target_strategy.pattern.strategy_tagger import SimpleTagger
-tagger = SimpleTagger("lbank_1min_candles.csv")
-tagger.tag_initial_leg()
-tagger.export()
-              
-              
-'''
-def run_websockets_data():
+def run_websocket_data():
     subprocess.run(["python", "websockets_data.py"])
-    
-def run_candle_updater():
-    while True:
-        subprocess.run(["python", "change_to_1min.py"])
-        time.sleep(5)
 
-if __name__ == "main":
-    
-    p1 = multiprocessing.Process(target=run_websockets_data)
-    p2 = multiprocessing.Process(target=run_candle_updater)
-    p1.start()
-    p2.start()
-    p1.join()
-    p2.join()
-                '''
-                              
+def run_candle_plot():
+    subprocess.run(["python", "change_to_1min.py"])
+
+if __name__ == "__main__":
+    # ایجاد ترد برای دریافت داده‌های لایو
+    t1 = threading.Thread(target=run_websocket_data)
+    # ایجاد ترد برای تبدیل به کندل و رسم
+    t2 = threading.Thread(target=run_candle_plot)
+
+    t1.start()
+    time.sleep(2)  # تاخیر جزئی برای اینکه اول داده بیاد بعد نمودار رسم بشه
+    t2.start()
+
+    t1.join()
+    t2.join()
