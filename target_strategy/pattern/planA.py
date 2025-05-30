@@ -50,25 +50,25 @@ df.to_csv("lbank_1min_candles.csv")
 print("WaveTags accepted")
 
 
-# Load data
+
 df = pd.read_csv("lbank_1min_candles.csv", parse_dates=['time'])
 df.set_index('time', inplace=True)
 
-# فیلتر نقاط موج
+
 p1 = df[df['wave_tag'] == 1]
 p2 = df[df['wave_tag'] == 2]
 p3 = df[df['wave_tag'] == 3]
 
-# رسم قیمت
+
 plt.figure(figsize=(15, 6))
 plt.plot(df['close'], label='Close Price', color='gray', linewidth=1)
 
-# رسم نقاط موج
+
 plt.scatter(p1.index, p1['close'], color='blue', label='Wave 1 (Low)', marker='o', s=50)
 plt.scatter(p2.index, p2['close'], color='orange', label='Wave 2 (High)', marker='^', s=50)
 plt.scatter(p3.index, p3['close'], color='green', label='Wave 3 (Correction)', marker='v', s=50)
 
-# خطوط اتصال بین موج‌ها (اختیاری)
+
 for i in range(min(len(p1), len(p2), len(p3))):
     try:
         x_vals = [p1.index[i], p2.index[i], p3.index[i]]
@@ -77,7 +77,6 @@ for i in range(min(len(p1), len(p2), len(p3))):
     except:
         continue
 
-# تنظیمات نهایی
 plt.title("Wave 1-2-3 Pattern Detection")
 plt.xlabel("Time")
 plt.ylabel("Price")
