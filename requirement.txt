@@ -1,0 +1,8 @@
+pandas 
+matplotlib
+numpy
+yfinance
+websocket
+requests
+pandas_ta
+plotly

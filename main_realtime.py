@@ -31,7 +31,7 @@ def run_analysis_pipeline():
         except Exception as e:
             print(f" Error during analysis: {e}")
         
-        time.sleep(60)
+        time.sleep(10)
 
 if __name__ == "__main__":
     t1 = threading.Thread(target=run_websocket_data)
