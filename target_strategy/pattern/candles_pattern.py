@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # parameter
-ORDER = 10  # pivot
+ORDER = 8  # pivot
 
 # === Pivot Detection functions ===
 def rw_top(data, curr_index, order):
@@ -51,13 +51,23 @@ def detect_combined_signals(df, order=10):
         c1, c2, c3 = close[i - 2], close[i - 1], close[i]
         o1, o2, o3 = open_[i - 2], open_[i - 1], open_[i]
 
-        #  Bullish Engulfing
-        if (c3 > o3 and c2 < o2 and o3 < c2 and c3 > o2) and any(b[1] == i - 2 for b in bottoms):
-            df.iloc[i, df.columns.get_loc('strategy_signal')] = 2
+    # Bullish Signal
+    if (
+        c3 > o3 and c2 < o2 and c3 > o2 and
+        any(abs(b[1] - (i - 2)) <= 2 for b in bottoms) and
+        df['RSI'].iloc[i] < 65 and
+        df['close'].iloc[i] > df['SMA_25'].iloc[i]
+    ):
+        df.iloc[i, df.columns.get_loc('strategy_signal')] = 2
 
-        #  Bearish Engulfing
-        if (c3 < o3 and c2 > o2 and o3 > c2 and c3 < o2) and any(t[1] == i - 2 for t in tops):
-            df.iloc[i, df.columns.get_loc('strategy_signal')] = 1
+    # Bearish Signal
+    if (
+        c3 < o3 and c2 > o2 and c3 < o2 and
+        any(abs(t[1] - (i - 2)) <= 2 for t in tops) and
+        df['RSI'].iloc[i] > 40 and
+        df['close'].iloc[i] < df['SMA_25'].iloc[i]
+    ):
+        df.iloc[i, df.columns.get_loc('strategy_signal')] = 1
 
     return df, tops, bottoms
 
@@ -99,4 +109,4 @@ def run_strategy(csv_path: str, plot_range: int = 300):
 
 if __name__ == "__main__":
     df_result = run_strategy("lbank_1min_candles.csv")
-    df_result.to_csv("lbank_1min_with_signals.csv")
+    df_result.to_csv("lbank_1min_candles.csv")
