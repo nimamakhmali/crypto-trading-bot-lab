@@ -77,8 +77,8 @@ def walkforward_model(
 
 if __name__ == '__main__':
     data = pd.read_csv('lbank_1min_candles.csv')
-    data['date'] = data['date'].astype('datetime64[s]')
-    data = data.set_index('date')
+    data['time'] = data['time'].astype('timetime64[s]')
+    data = data.set_index('time')
     data = data.dropna()
 
     trades, data_x, data_y = trendline_breakout_dataset(data, 72)

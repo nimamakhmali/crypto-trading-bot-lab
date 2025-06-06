@@ -11,26 +11,21 @@ def trendline_breakout_dataset(
         hold_period: int = 12, tp_mult: float = 3.0, sl_mult: float = 3.0,
         atr_lookback: int = 168
 ):
-    assert atr_lookback >= lookback
-
     ohlcv = ohlcv.dropna(subset=['high', 'low', 'close', 'volume'])
 
-    if len(ohlcv) < atr_lookback + lookback + hold_period:
-        raise ValueError(f"Not enough rows: need at least {atr_lookback + lookback + hold_period}")
+    min_rows = atr_lookback + lookback + hold_period
+    if len(ohlcv) < min_rows:
+        raise ValueError(f"Not enough rows: need at least {min_rows}, but got {len(ohlcv)}")
 
     close = np.log(ohlcv['close'].to_numpy())
 
-    # ATR
     atr = ta.atr(np.log(ohlcv['high']), np.log(ohlcv['low']), np.log(ohlcv['close']), atr_lookback)
     if atr is None or atr.isna().all():
         raise ValueError("ATR calculation failed.")
-
     atr_arr = atr.fillna(method='bfill').to_numpy()
 
-    # Volume (normalized)
     vol_arr = (ohlcv['volume'] / ohlcv['volume'].rolling(atr_lookback).median()).fillna(1.0).to_numpy()
 
-    # ADX
     adx = ta.adx(ohlcv['high'], ohlcv['low'], ohlcv['close'], lookback)
     adx_col = f"ADX_{lookback}"
     if adx is None or adx_col not in adx:
@@ -90,13 +85,27 @@ def trendline_breakout_dataset(
 
 if __name__ == '__main__':
     data = pd.read_csv('lbank_1min_candles.csv')
-    data['time'] = pd.to_datetime(data['time'])
-    data = data.set_index('time')
+    print("Dataset loaded. Total rows:", len(data))
+
+    time_col = 'time' if 'time' in data.columns else 'date'
+    data[time_col] = pd.to_datetime(data[time_col])
+    data = data.set_index(time_col)
     data = data.dropna()
 
-    trades, data_x, data_y = trendline_breakout_dataset(data, lookback=72)
+    LOOKBACK = 48
+    HOLD_PERIOD = 6
+    ATR_LOOKBACK = 96
 
-    # Generate signal from trades
+    try:
+        trades, data_x, data_y = trendline_breakout_dataset(
+            data, lookback=LOOKBACK,
+            hold_period=HOLD_PERIOD,
+            atr_lookback=ATR_LOOKBACK
+        )
+    except ValueError as e:
+        print("Error:", e)
+        exit()
+
     signal = np.zeros(len(data))
     for i in range(len(trades)):
         trade = trades.iloc[i]
@@ -111,6 +120,7 @@ if __name__ == '__main__':
     print("Average Trade:", trades['return'].mean())
 
     returns.cumsum().plot()
-    plt.ylabel("Cumulative Log Return")
     plt.title("Trendline Breakout Backtest")
+    plt.ylabel("Cumulative Log Return")
+    plt.xlabel("Time")
     plt.show()

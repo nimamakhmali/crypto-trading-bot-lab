@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pandas_ta as ta
 import matplotlib.pyplot as plt
-from trendline_automation import fit_trendline_single
+from trendline_automation import fit_trendlines_single
 import mplfinance as mpf
 
 def trendline_breakout(close: np.array, lookback:int):
@@ -13,7 +13,7 @@ def trendline_breakout(close: np.array, lookback:int):
     sig = np.zeros(len(close))
     for i in range(lookback, len(close)):
         window = close[i - lookback: i]
-        s_coefs, r_coefs = fit_trendline_single(window)
+        s_coefs, r_coefs = fit_trendlines_single(window)
         s_val = s_coefs[1] + lookback * s_coefs[0]
         r_val = r_coefs[1] + lookback * r_coefs[0]
         s_t1[i] = s_val
