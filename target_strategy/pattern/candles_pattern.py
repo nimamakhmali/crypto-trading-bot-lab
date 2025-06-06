@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # parameter
-ORDER = 12 # pivot
+ORDER = 5 # pivot
 
 # === Pivot Detection functions ===
 def rw_top(data, curr_index, order):
