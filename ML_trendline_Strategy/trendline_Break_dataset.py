@@ -22,7 +22,8 @@ def trendline_breakout_dataset(
     atr = ta.atr(np.log(ohlcv['high']), np.log(ohlcv['low']), np.log(ohlcv['close']), atr_lookback)
     if atr is None or atr.isna().all():
         raise ValueError("ATR calculation failed.")
-    atr_arr = atr.fillna(method='bfill').to_numpy()
+    atr_arr = atr.bfill().to_numpy()  # ← اصلاح هشدار
+
 
     vol_arr = (ohlcv['volume'] / ohlcv['volume'].rolling(atr_lookback).median()).fillna(1.0).to_numpy()
 
