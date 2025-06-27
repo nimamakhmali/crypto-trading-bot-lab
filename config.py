@@ -1,0 +1,1 @@
+symbol = "btc_usdt"

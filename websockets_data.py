@@ -5,23 +5,24 @@ import json
 import csv
 import os
 from datetime import datetime
-
+from config import symbol
 
 uri = "wss://www.lbkex.net/ws/V2/"
 ssl_context = ssl._create_unverified_context()
-ping_interval = 20   # هر ۲۰ ثانیه ping بفرست
-ping_timeout = 10    # اگه ۱۰ ثانیه جوابی نیومد، اتصال رو قطع کن
+ping_interval = 20   
+ping_timeout = 10    
 
+# symbol = "btc_usdt"
 
-file_path = "lbank_kbars.csv"
+file_path = os.path.join("Data", "kbars.csv")
 header = ["time", "open", "high", "low", "close", "volume", "amount", "trades"]
 
-
+if not os.path.exists("Data"):
+    os.mkdir("Data")
 if not os.path.exists(file_path):
     with open(file_path, mode="w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(header)
-
 
 def save_kbar_to_csv(kbar):
     try:
@@ -53,7 +54,7 @@ async def kbar_handler():
                     "action": "subscribe",
                     "subscribe": "kbar",
                     "kbar": "1min",
-                    "pair": "btc_usdt",
+                    "pair": symbol,
                 }
                 await ws.send(json.dumps(subscribe_msg))
                 print(" Subscribed to 1min KBAR")
@@ -80,7 +81,7 @@ async def live_ticker():
                 subscribe_msg = {
                     "action": "subscribe",
                     "subscribe": "ticker",
-                    "pair": "btc_usdt",
+                    "pair": symbol,
                 }
                 await ws.send(json.dumps(subscribe_msg))
                 print(" Subscribed to Ticker")
