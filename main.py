@@ -12,7 +12,7 @@ from target_strategy.pattern.main_strategy import (
     FIB_LEVELS,
     PIVOT_WINDOW
 )
-from websockets_data import kbar_handler
+from websockets_data_feed import kbar_handler
 from config import symbol
 
 DATA_DIR = "Data"
