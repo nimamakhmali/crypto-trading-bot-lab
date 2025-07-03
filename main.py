@@ -12,18 +12,41 @@ from target_strategy.pattern.main_strategy import (
     FIB_LEVELS,
     PIVOT_WINDOW
 )
+
 from websockets_data_feed import kbar_handler
 from config import symbol
+from Signals_Log import log_signal  # 
+from RestApi import fetch_initial_candles  #
 
 DATA_DIR = "Data"
 KBAR_PATH = os.path.join(DATA_DIR, "kbars.csv")
 CANDLE_PATH = os.path.join(DATA_DIR, f"{symbol}_1min_candles.csv")
-CHECK_INTERVAL = 5  # ثانیه
+MAX_CANDLES = 500  #
+CHECK_INTERVAL = 10  #
 
 last_signal_time = None
 active_trade = None
 
-def change_to_1min():
+def ensure_initial_candles():
+
+    need_fetch = False
+    if not os.path.exists(CANDLE_PATH):
+        need_fetch = True
+    else:
+        try:
+            df = pd.read_csv(CANDLE_PATH)
+            if df.shape[0] < 30:
+                need_fetch = True
+        except Exception:
+            need_fetch = True
+
+    if need_fetch:
+        print("Fetching last 30 candles from REST API...")
+        fetch_initial_candles(CANDLE_PATH, symbol=symbol, type_="minute1", size=30)
+        print("Initial candles fetched.")
+        
+def change_to_1min_and_limit():
+
     if not os.path.exists(KBAR_PATH):
         return
     df = pd.read_csv(KBAR_PATH)
@@ -36,10 +59,12 @@ def change_to_1min():
         'close': 'last',
         'volume': 'sum'
     }).dropna()
+
+    candles = candles.tail(MAX_CANDLES)
     candles.to_csv(CANDLE_PATH)
 
 def plot_live(df, fib_lines, active_trade):
-    plt.close('all')  #
+    plt.close('all')
     df_plot = df.tail(100)
     fig, (ax1, ax2) = plt.subplots(
         2, 1, figsize=(16, 8),
@@ -49,7 +74,6 @@ def plot_live(df, fib_lines, active_trade):
     ax1.plot(df_plot.index, df_plot['close'], label='Close', color='gray', linewidth=1)
     ax1.plot(df_plot.index, df_plot['SMA_25'], label='SMA 25', color='blue', linewidth=1)
     ax1.plot(df_plot.index, df_plot['SMA_50'], label='SMA 50', color='orange', linewidth=1)
-   # ax1.bar(df_plot.index, df_plot['volume'], color='lightgray', alpha=0.4, label='Volume', width=0.0008)
     ax1.scatter(df_plot.index[df_plot['tag3'] == 1], df_plot['close'][df_plot['tag3'] == 1], color='green', marker='v', s=60, label='Tag 3')
     for idx1, idx2, idx3, fibs, direction in fib_lines:
         if df.index[idx3] not in df_plot.index:
@@ -76,17 +100,20 @@ def plot_live(df, fib_lines, active_trade):
     ax2.grid(True)
     plt.tight_layout()
     plt.show(block=False)
-    plt.pause(3)      # چارت 3 ثانیه نمایش داده شود
-    plt.close('all')  # سپس پنجره بسته شود
+    plt.pause(2)
+    plt.close('all')
+
 async def candle_builder_loop():
+
     while True:
-        change_to_1min()
+        change_to_1min_and_limit()
         await asyncio.sleep(1)
 
 async def strategy_loop():
     global last_signal_time, active_trade
-    plt.ion()  # interactive mode
+    plt.ion()
     print("Live strategy started. Press Ctrl+C to stop.")
+    last_checked_candle = None
     while True:
         try:
             if not os.path.exists(CANDLE_PATH):
@@ -103,37 +130,49 @@ async def strategy_loop():
             df, fib_lines = detect_123_patterns_precise(df, pivots, FIB_LEVELS)
             trades = generate_trades(df, fib_lines)
 
-            # مدیریت معامله فعال
-            if active_trade:
-                last_price = df['close'].iloc[-1]
-                if active_trade['direction'] == 'up':
-                    if last_price >= active_trade['target_price']:
-                        print(f"\n[TP HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target: {active_trade['target_price']}")
-                        active_trade = None
-                    elif last_price <= active_trade['stop_price']:
-                        print(f"\n[SL HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Stop: {active_trade['stop_price']}")
-                        active_trade = None
-                else:
-                    if last_price <= active_trade['target_price']:
-                        print(f"\n[TP HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target: {active_trade['target_price']}")
-                        active_trade = None
-                    elif last_price >= active_trade['stop_price']:
-                        print(f"\n[SL HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Stop: {active_trade['stop_price']}")
-                        active_trade = None
+            last_candle_time = df.index[-1] if len(df) > 0 else None
+            if last_candle_time != last_checked_candle:
+                last_checked_candle = last_candle_time
 
-            # اگر معامله فعال نداریم، دنبال سیگنال جدید بگرد
-            if not active_trade and trades:
-                last_trade = trades[-1]
-                if last_signal_time is None or last_trade['entry_time'] > last_signal_time:
-                    last_signal_time = last_trade['entry_time']
-                    active_trade = last_trade
-                    print(f"\n[NEW TRADE] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                    print(f"Entry: {last_trade['entry_time']} | Price: {last_trade['entry_price']} | "
-                          f"Target: {last_trade['target_price']} | Stop: {last_trade['stop_price']} | "
-                          f"Direction: {last_trade['direction']}")
+                if active_trade:
+                    last_price = df['close'].iloc[-1]
+                    if active_trade['direction'] == 'up':
+                        if last_price >= active_trade['target_price']:
+                            print(f"\n[TP HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target: {active_trade['target_price']}")
+                            active_trade['exit_price'] = last_price
+                            log_signal("TP", active_trade, pnl=last_price - active_trade['entry_price'])
+                            active_trade = None
+                        elif last_price <= active_trade['stop_price']:
+                            print(f"\n[SL HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Stop: {active_trade['stop_price']}")
+                            active_trade['exit_price'] = last_price
+                            log_signal("SL", active_trade, pnl=last_price - active_trade['entry_price'])
+                            active_trade = None
+                    else:
+                        if last_price <= active_trade['target_price']:
+                            print(f"\n[TP HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target: {active_trade['target_price']}")
+                            active_trade['exit_price'] = last_price
+                            log_signal("TP", active_trade, pnl=active_trade['entry_price'] - last_price)
+                            active_trade = None
+                        elif last_price >= active_trade['stop_price']:
+                            print(f"\n[SL HIT] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Stop: {active_trade['stop_price']}")
+                            active_trade['exit_price'] = last_price
+                            log_signal("SL", active_trade, pnl=active_trade['entry_price'] - last_price)
+                            active_trade = None
 
-            # پلات زنده در هر حلقه
-            plot_live(df, fib_lines, active_trade)
+
+                if not active_trade and trades:
+                    last_trade = trades[-1]
+                    if last_signal_time is None or last_trade['entry_time'] > last_signal_time:
+                        last_signal_time = last_trade['entry_time']
+                        active_trade = last_trade
+                        print(f"\n[NEW TRADE] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                        print(f"Entry: {last_trade['entry_time']} | Price: {last_trade['entry_price']} | "
+                              f"Target: {last_trade['target_price']} | Stop: {last_trade['stop_price']} | "
+                              f"Direction: {last_trade['direction']}")
+                        log_signal("ENTRY", last_trade)
+
+
+                plot_live(df, fib_lines, active_trade)
 
             await asyncio.sleep(CHECK_INTERVAL)
         except KeyboardInterrupt:
@@ -145,10 +184,11 @@ async def strategy_loop():
 
 async def main():
     await asyncio.gather(
-        kbar_handler(),
-        candle_builder_loop(),
-        strategy_loop()
+        kbar_handler(),         # 
+        candle_builder_loop(),  # 
+        strategy_loop()         # 
     )
 
 if __name__ == "__main__":
+    ensure_initial_candles()  # 
     asyncio.run(main())
