@@ -1,3 +1,5 @@
+#!/bin/python
+
 import asyncio
 import os
 import pandas as pd
@@ -186,7 +188,7 @@ async def main():
     await asyncio.gather(
         kbar_handler(),         # 
         candle_builder_loop(),  # 
-        strategy_loop()         # 
+        strategy_loop()         # yeeaah Buddyyy
     )
 
 if __name__ == "__main__":
